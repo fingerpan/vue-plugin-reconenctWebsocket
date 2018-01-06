@@ -4,16 +4,19 @@ export const isEmptyObject = () => {
 
 }
 
-export const extend = (target, source) => {
-  for (var key in source) {
-    if (source.hasOwnProperty(key)) {
-      target[key] = source[key]
+export const merge = (target, ...source) => {
+  source.forEach(item => {
+    console.log(item)
+    for (var key in item) {
+      if (item.hasOwnProperty(key)) {
+        target[key] = item[key]
+      }
     }
-  }
+  })
   return target
 }
 
-export function bulidPromPending(errorHandler) {
+export function bulidPromPending(func, errorHandler) {
   var promiser = {}
   var promise = new Promise((resolve, reject) => {
     promiser.state = 'pending'
@@ -26,24 +29,16 @@ export function bulidPromPending(errorHandler) {
       reject(...args)
     }
   })
-  promise = extend(promise, promiser)
+  promise = merge(promise, promiser)
+  console.log(promise)
   promiser = null
-
-  rewriteCatchThen(promise, errorHandler)
+  setTimeout(() => {
+    func(promise)
+  }, 0)
+  if (errorHandler) {
+    rewriteCatchThen(promise, errorHandler)
+  }
   return promise
-}
-
-export function getType(target) {
-  return Object.prototype.toString.call(target).slice(8, -1)
-}
-
-/**
- * 判断传入对象 是否为构造函数Object直接构造，并且不为null
- * @param obj           {查询对象}
- * @returns {boolean}   {返回是否为纯对象}
- */
-export function isPlainObject(obj) {
-  return obj && typeof obj === 'object' && getType(obj) === 'Object'
 }
 
 function rewriteCatchThen(promise, callback) {
@@ -81,6 +76,22 @@ function rewriteCatchThen(promise, callback) {
   }
 
   return promise
+}
+
+export function getType(target) {
+  return Object.prototype.toString.call(target).slice(8, -1)
+}
+export function expect(target, ...args) {
+  return args.findIndex(t => t === getType(target)) > 0
+}
+
+/**
+ * 判断传入对象 是否为构造函数Object直接构造，并且不为null
+ * @param obj           {查询对象}
+ * @returns {boolean}   {返回是否为纯对象}
+ */
+export function isPlainObject(obj) {
+  return obj && typeof obj === 'object' && getType(obj) === 'Object'
 }
 
 export const symbolMap = (arr) => {
