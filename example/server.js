@@ -3,8 +3,9 @@ const express = require('express')
 const webpack = require('webpack')
 const webpackDevMiddleware = require('webpack-dev-middleware')
 const WebpackConfig = require('./webpack.config')
+const opn = require('opn')
 
-const ws = require('./ws')
+require('./server/ws')
 
 const app = express()
 
@@ -23,8 +24,8 @@ const hotMiddleware = require('webpack-hot-middleware')(compiler, {
 })
 app.use(hotMiddleware)
 
-const fs = require('fs')
-const path = require('path')
+// const fs = require('fs')
+// const path = require('path')
 
 // fs.readdirSync(__dirname).forEach(file => {
 //   if (fs.statSync(path.join(__dirname, file)).isDirectory()) {
@@ -38,7 +39,9 @@ console.log('> Starting dev server...')
 const port = process.env.PORT || 8080
 
 module.exports = app.listen(port, () => {
-  // var uri = 'http://localhost:' + port
+  var uri = 'http://localhost:' + port
   // console.log('> Listening at ' + uri + '\n')
-  console.log(`Server listening on http://localhost:${port}, Ctrl+C to stop`)
+  console.log(`Server listening on ${uri}, Ctrl+C to stop`)
+
+  opn(uri)
 })

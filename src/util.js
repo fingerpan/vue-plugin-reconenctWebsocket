@@ -6,9 +6,8 @@ export const isEmptyObject = () => {
 
 export const merge = (target, ...source) => {
   source.forEach(item => {
-    console.log(item)
     for (var key in item) {
-      if (item.hasOwnProperty(key)) {
+      if (item.hasOwnProperty(key) && !target[key]) {
         target[key] = item[key]
       }
     }
@@ -30,7 +29,6 @@ export function bulidPromPending(func, errorHandler) {
     }
   })
   promise = merge(promise, promiser)
-  console.log(promise)
   promiser = null
   setTimeout(() => {
     func(promise)
@@ -100,4 +98,11 @@ export const symbolMap = (arr) => {
     map[name] = Symbol()
   })
   return map
+}
+
+export class CreateError extends Error {
+  constructor(name, message) {
+    super(message)
+    this.name = name
+  }
 }

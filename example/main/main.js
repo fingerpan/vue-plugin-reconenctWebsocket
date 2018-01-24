@@ -1,4 +1,3 @@
-/* eslint-disable */
 import Vue from 'vue'
 import App from './App.vue'
 
@@ -6,42 +5,40 @@ import Socket from '../../src/index.js'
 
 // new socket
 let socket = new Socket('ws://127.0.0.1:3000')
-// use plugin
 Vue.use(Socket, socket)
-console.log(socket);
-socket.binaryType = 'arraybuffer'
-// open
-socket.on('open', () => {
-  console.log('open')
-})
-socket.beforeSend = function(options, send) {
-  console.log(options)
-  send(options)
 
-}
-
+// hook
 socket.beforeEmit = (e) => {
-  console.log(e)
-  e.type = 'name'
-  return e
+  // return data
+  return JSON.parse(e.data)
+}
+socket.beforeSend = (options, send) => {
+  options.data = JSON.stringify({
+    type: options.type || 'say',
+    data: JSON.stringify(options.data)
+  })
+  send(options)
 }
 
-
-socket.send({
-  data: 'text',
-}, {
-  rep: 'message'
+// login
+socket.send('myname', {
+  type: 'login',
+  rep: 'loginSuccess'
 }).then((data) => {
-  if (data instanceof ArrayBuffer) {
-    var bytearray = new Uint8Array(data)
-    console.log(bytearray)
-  }
-  // socket.close()
+  // loginSuccess
+  // todo..
 })
 
+// socket.close()
 
 
-
+setTimeout(() => {
+  socket.send('myame', {
+    type: 'login',
+    rep: 'loginSuccess'
+  }).then(console.log)
+}, 2000)
+/* eslint-disable no-new */
 new Vue({
   el: '#app',
   template: '<App/>',

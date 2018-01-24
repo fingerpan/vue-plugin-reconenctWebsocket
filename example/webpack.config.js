@@ -1,4 +1,3 @@
-const fs = require('fs')
 const path = require('path')
 const webpack = require('webpack')
 // const HtmlWebpackPlugin = require('html-webpack-plugin')
@@ -19,7 +18,11 @@ module.exports = {
   module: {
     rules: [
       { test: /\.js$/, exclude: /node_modules/, loader: 'babel-loader' },
-      { test: /\.vue$/, loader: 'vue-loader' }
+      { test: /\.vue$/, loader: 'vue-loader' },
+      {
+        test: /\.(png|jpe?g|gif|svg)(\?.*)?$/,
+        loader: 'url-loader'
+      }
     ]
   },
 

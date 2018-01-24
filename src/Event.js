@@ -44,7 +44,7 @@ export default class Event {
   emit(event, ...args) {
     let _event = this._events[event] || []
     _event.forEach(eventItem => {
-      let cxt = (eventItem.cxt = this)
+      let cxt = eventItem.cxt || this
       let callback = eventItem.callback
       callback.apply(cxt, args)
     })

@@ -1,14 +1,12 @@
 import Event from './Event.js'
-import { bulidPromPending, isPlainObject, symbolMap, expect, merge } from './util.js'
+import { bulidPromPending, isPlainObject, symbolMap, expect, merge, CreateError } from './util.js'
 
-// 通过symble 来做私有的方法还有私有属性
 const errorHandler = Symbol('errorHandler')
 const binaryTypeSymbol = Symbol('binaryType')
 const socketSymbol = Symbol('WebSocket')
 const send = Symbol('send')
 const MessageQueue = Symbol('MessageQueue')
 const sendMessageQueue = Symbol('sendMessageQueue')
-
 const symbolNameSpaceMap = symbolMap([
   'onopen',
   'onmessage',
@@ -19,13 +17,13 @@ const symbolNameSpaceMap = symbolMap([
 const defaultConfig = {
   protocol: '',
   reconnect: true,
-  autoconnect: true
+  autoconnect: true,
+  reconnectTime: 5
 }
 // optionsCondig
 const defaultSendConfig = {
-  rep: '', // 是否有需要监听回包
-  retry: true, // 是否在链接状态的时候,等待链接完毕重新发送,还是直接报错
-  timeout: 5000 // 监听回包的超时时间
+  retry: true,
+  timeout: 10000
 }
 
 /**
@@ -33,13 +31,11 @@ const defaultSendConfig = {
  * @extends Event
  */
 export default class Socket extends Event {
-  // 静态方法
-  static CONNECTING = 0;
-  static OPEN = 1;
-  static CLOSING = 2;
-  static CLOSED = 3;
-
-  _isSocket = true;
+  // connect state
+  static CONNECTING = 0
+  static OPEN = 1
+  static CLOSING = 2
+  static CLOSED = 3
 
   /**
    * @return {'blob'|'arraybuffer'} -A string indicating the type of binary data being transmitted by the connection
@@ -136,7 +132,7 @@ export default class Socket extends Event {
   }
 
   /**
-   * 对外方法
+   * @public
    * @example
    * send(data, {
    *  rep: 'pong',
@@ -146,7 +142,7 @@ export default class Socket extends Event {
    *     data => {type:pong}
    *   })
    *   .catch(error => {
-   *      error.message => '等待回包超时'
+   *      error.message => 'wait Reply timeout'
    *   })
    *
    *
@@ -175,13 +171,12 @@ export default class Socket extends Event {
   }
 
   /**
-   * 私有的发送方法
    * private send func
    * @private
    * @ignore
    */
   [send](options, promise) {
-    if (!options || !options.data) return promise.reject(new Error('data is necessary to send socket'))
+    if (!options || !options.data) return promise.reject(new TypeError('Failed to execute \'send\' on \'WebSocket\': 1 argument required, but only 0 present.'))
 
     // options
     options = merge(options, defaultSendConfig)
@@ -192,19 +187,18 @@ export default class Socket extends Event {
     // stringify data
     if (typeof data === 'object' && !expect(data, 'Blob', 'ArrayBuffer')) {
       options.data = data = JSON.stringify(data)
+      console.log(options.data)
     }
 
     const READYSTATE = this.readyState
-    console.log(`the socket readyState is ${READYSTATE}`)
     // is closing or closed
     if (READYSTATE > 1) {
-      // TODO socket 处于关闭状态
-      const err = new Error('socket 连接失败')
+      const err = new CreateError('INVALID_STATE_ERR', 'Failed to execute \'send\' on \'WebSocket\': The connection is not currently OPEN')
       return promise.reject(err)
     } else if (READYSTATE === 0) {
       // is connecting
       if (retry === false) {
-        const err = new Error('socket 正在连接中,请稍后再试')
+        const err = new CreateError('INVALID_STATE_ERR', 'Failed to execute \'send\' on \'WebSocket\': WebSocket is connecting')
         return promise.reject(err)
       } else {
         return this[MessageQueue].push({ options, promise })
@@ -219,20 +213,20 @@ export default class Socket extends Event {
     const isSend = this[socketSymbol] ? this[socketSymbol].send(data) : false
 
     if (isSend === false) {
-      return promise.reject(new Error('发送失败'))
+      return promise.reject(new CreateError('SEND_ERR', 'Failed to execute \'send\' on \'WebSocket\': unkown reason'))
     }
     // wait rep
     if (rep) {
-      let timeId = null
-      const off = this.once(rep, data => {
-        clearTimeout(timeId)
-        promise && promise.resolve(data)
-      })
-      timeId = setTimeout(() => {
-        const err = new Error('等待回包超时')
+      let timeoutId = null
+      timeoutId = setTimeout(() => {
+        const err = new CreateError('TIMEOUT-ERR', 'wait Reply timeout')
         promise && promise.reject(err)
         off()
       }, timeout)
+      var off = this.once(rep, data => {
+        clearTimeout(timeoutId)
+        promise && promise.resolve(data)
+      })
     } else {
       promise.resolve(true)
     }
@@ -256,7 +250,7 @@ export default class Socket extends Event {
    * 连接websocket
    * connect websocket
    *
-   * @param  {string} [url] -WebSocket地址
+   * @param  {string} [url] -WebSocket url
    */
   connect(url) {
     // get and save url
@@ -272,17 +266,15 @@ export default class Socket extends Event {
       url = this.url
     }
 
-    // TODO 报错, 必须要url
-    if (!url) return false
+    if (!url) {
+      return this.emit('error', new TypeError('Failed to construct \'WebSocket\': 1 argument required, but only 0 present.'))
+    }
 
     if (!window.WebSocket) {
-      // TODO 报错， 不支持
-      console.error('不支持WebSocket')
-      return this.emit('noSupport')
+      return this.emit('error', new TypeError('Failed to construct \'WebSocket\': The browser is not support WebSocket'))
     }
     // new WebSocket
     let ws = (this[socketSymbol] = this.config.protocol ? new WebSocket(url, this.config.protocol) : new WebSocket(url))
-    // 首页连接失败就不再尝试
     this.ignoreReconnect = true
     // bind open error message close event
     Object.keys(symbolNameSpaceMap).forEach(name => {
@@ -300,6 +292,11 @@ export default class Socket extends Event {
    * @param  {string} [url] -WebSocket地址
    */
   reconnect(url) {
+    this.config.reconnectTime--
+    // stop loop connect
+    if (this.config.reconnectTime < 0) {
+      return false
+    }
     // close socket
     this[socketSymbol] && this[socketSymbol].close()
     // delete
@@ -308,7 +305,6 @@ export default class Socket extends Event {
     this.connect(url)
   }
 
-  // 消息缓冲队列
   [MessageQueue] = [];
   /**
    * when WebSocket is open, send the data whice in MessageQueue
@@ -324,17 +320,15 @@ export default class Socket extends Event {
     })
     this[MessageQueue] = []
   }
-
   // reconnect time
   connectTime = 0;
   /**
    * websocket.onopen
-   * @param  {event} event  -返回的event
+   * @param  {event} event  -event
    */
   [symbolNameSpaceMap.onopen](event) {
     console.warn('=========== websocket open ============')
     this.connectTime++
-
     // emit success
     this.emit('success', event)
     // emit open or reconnect
@@ -360,8 +354,6 @@ export default class Socket extends Event {
    * @param  {event} event  -event
    */
   [symbolNameSpaceMap.onclose](event) {
-    console.log(event)
-    // 触发关闭事件
     this.emit('close', event)
     // reconect
     if (this.config.reconnect && !this.ignoreReconnect) {
@@ -375,50 +367,20 @@ export default class Socket extends Event {
    */
   [symbolNameSpaceMap.onmessage](event) {
     console.warn('=========== websocket message ===========')
-
     // beforeEmit
-    console.log(event)
     if (this.beforeEmit && typeof this.beforeEmit === 'function') {
-      // beforeEmit 钩子
-      event = this.beforeEmit({ ...event })
-      if (event === false) return
-
-      if (!isPlainObject(event)) {
-        // 必须返回对象
-        return console.error('返回格式有误')
-      }
+      event = this.beforeEmit({
+        data: event.data,
+        type: event.type
+      })
+      if (event === false || !isPlainObject(event) || !event.type) return false
     }
-    let data = event.data
-    let type = event.type
-    // Binary data
-    // if (data instanceof ArrayBuffer || data instanceof Blob) {
-    //   this.emit(type, event)
-    // }
-
-    // // 对消息进行解析
-    // if (typeof data === 'string') {
-    //   try {
-    //     data = JSON.parse(data)
-    //   } catch (e) {
-    //     console.log(e)
-    //   }
-    // }
-    // // data is a object
-    //
-    // if (
-    //   isPlainObject(data) &&
-    //   'type' in data &&
-    //   typeof data.type === 'string'
-    // ) {
-    //   type = data.type
-    // }
-
-    this.emit(type, data)
+    this.emit(event.type, event.data)
   }
   // catch the send error
   catch(fn) {
     if (typeof fn !== 'function') {
-      return console.error('catch is must be a function')
+      return console.error(new TypeError('catch is must be a function'))
     }
     this[errorHandler] = fn
   }

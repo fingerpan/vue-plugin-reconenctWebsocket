@@ -3,14 +3,15 @@
  * 注册install
  */
 import { isEmptyObject, isPlainObject } from './util.js'
+import Socket from './Socket.js'
 export let _Vue = null
 
 export function install(Vue, socket) {
   if (install.installed) return
   install.installed = true
 
-  if (!socket._isSocket) {
-    return 'must be a socket'
+  if (!(socket instanceof Socket) && typeof socket === 'object' && socket.url) {
+    socket = new Socket(socket.url, socket)
   }
 
   _Vue = Vue

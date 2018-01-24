@@ -1,18 +1,18 @@
 <template>
   <div id="app">
-    <hello-word></hello-word>
+    <chat></chat>
   </div>
 </template>
 
 <script>
-import HelloWord from './HelloWord.comp.vue'
+import chat from './chat.vue'
 export default {
   name: 'app',
   created () {
-    
+
   },
   components: {
-    HelloWord
+    chat
   }
 }
 </script>
