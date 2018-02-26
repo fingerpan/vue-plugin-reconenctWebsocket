@@ -84,10 +84,12 @@ export default {
       // 推送消息
       this.pushMessage(messageItem)
 
+      // 发送消息
       this.$socket.send(messageItem, {
         type: 'say',
         rep: messagekey
       }).then((data) => {
+        console.log("----");
         // 发送成功
         messageItem.sendState = 1
       }).catch(() => {
@@ -189,7 +191,7 @@ export default {
   }
 
 
-  
+
   .chat__message {
     max-width: 70%;
     clear: both;

@@ -1,7 +1,6 @@
 import Event from './Event.js'
 import { bulidPromPending, isPlainObject, symbolMap, expect, merge, CreateError } from './util.js'
 
-const errorHandler = Symbol('errorHandler')
 const binaryTypeSymbol = Symbol('binaryType')
 const socketSymbol = Symbol('WebSocket')
 const send = Symbol('send')
@@ -118,8 +117,10 @@ export default class Socket extends Event {
       config = url
       url = config.url
     }
+
     // merge default config
     this.config = merge(config, defaultConfig)
+
     // save hooks
     this.beforeSend = this.config.beforeSend
     this.beforeEmit = this.config.beforeEmit
@@ -152,7 +153,7 @@ export default class Socket extends Event {
    * @param  {number}        [options.timeout=5000]  -等待的时间wait time
    * @param  {boolean}       [options.retry=false]    -在正在连接的状态下(readyState===0)下是否加入消息缓冲队列
    *
-   * @return {promise}                                -返回一个promise
+   * @return {Promise}                                -返回一个promise
    */
   send(sendData, options = {}) {
     options.data = sendData
@@ -165,8 +166,9 @@ export default class Socket extends Event {
       } else {
         this[send](options, promiser)
       }
-    }, this[errorHandler])
-
+    }, (error) => {
+      this.$emit(error)
+    })
     return promise
   }
 
@@ -175,8 +177,8 @@ export default class Socket extends Event {
    * @private
    * @ignore
    */
-  [send](options, promise) {
-    if (!options || !options.data) return promise.reject(new TypeError('Failed to execute \'send\' on \'WebSocket\': 1 argument required, but only 0 present.'))
+  [send](options, promiser) {
+    if (!options || !options.data) return promiser.reject(new TypeError('Failed to execute \'send\' on \'WebSocket\': 1 argument required, but only 0 present.'))
 
     // options
     options = merge(options, defaultSendConfig)
@@ -194,14 +196,14 @@ export default class Socket extends Event {
     // is closing or closed
     if (READYSTATE > 1) {
       const err = new CreateError('INVALID_STATE_ERR', 'Failed to execute \'send\' on \'WebSocket\': The connection is not currently OPEN')
-      return promise.reject(err)
+      return promiser.reject(err)
     } else if (READYSTATE === 0) {
       // is connecting
       if (retry === false) {
         const err = new CreateError('INVALID_STATE_ERR', 'Failed to execute \'send\' on \'WebSocket\': WebSocket is connecting')
-        return promise.reject(err)
+        return promiser.reject(err)
       } else {
-        return this[MessageQueue].push({ options, promise })
+        return this[MessageQueue].push({ options, promiser })
       }
     }
 
@@ -213,22 +215,22 @@ export default class Socket extends Event {
     const isSend = this[socketSymbol] ? this[socketSymbol].send(data) : false
 
     if (isSend === false) {
-      return promise.reject(new CreateError('SEND_ERR', 'Failed to execute \'send\' on \'WebSocket\': unkown reason'))
+      return promiser.reject(new CreateError('SEND_ERR', 'Failed to execute \'send\' on \'WebSocket\': unkown reason'))
     }
     // wait rep
     if (rep) {
       let timeoutId = null
       timeoutId = setTimeout(() => {
         const err = new CreateError('TIMEOUT-ERR', 'wait Reply timeout')
-        promise && promise.reject(err)
+        promiser && promiser.reject(err)
         off()
       }, timeout)
       var off = this.once(rep, data => {
         clearTimeout(timeoutId)
-        promise && promise.resolve(data)
+        promiser && promiser.resolve(data)
       })
     } else {
-      promise.resolve(true)
+      promiser.resolve(true)
     }
   }
 
@@ -312,11 +314,11 @@ export default class Socket extends Event {
    */
   [sendMessageQueue]() {
     this[MessageQueue].forEach(message => {
-      let { options, promise } = message
-      this[send](options, promise)
+      let { options, promiser } = message
+      this[send](options, promiser)
 
       delete message.options
-      delete message.promise
+      delete message.promiser
     })
     this[MessageQueue] = []
   }
@@ -376,12 +378,5 @@ export default class Socket extends Event {
       if (event === false || !isPlainObject(event) || !event.type) return false
     }
     this.emit(event.type, event.data)
-  }
-  // catch the send error
-  catch(fn) {
-    if (typeof fn !== 'function') {
-      return console.error(new TypeError('catch is must be a function'))
-    }
-    this[errorHandler] = fn
   }
 }

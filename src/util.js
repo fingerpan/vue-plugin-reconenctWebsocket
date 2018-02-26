@@ -59,7 +59,7 @@ function rewriteCatchThen(promise, callback) {
     if (THEN_TIME === 1 && rejectCall && hasCatch === false) {
       hasCatch = true
     }
-    promiseThen.call(this, resolveCall, rejectCall)
+    return promiseThen.call(this, resolveCall, rejectCall)
   }
 
   // rewirte catch
