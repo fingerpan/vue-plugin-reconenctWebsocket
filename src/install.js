@@ -2,9 +2,10 @@
  * @author youngpan
  * 注册install
  */
-import { isEmptyObject, isPlainObject } from './util.js'
-import Socket from './Socket.js'
-export let _Vue = null
+import { isPlainObject, isEmptyObject } from './util.ts'
+import Socket from './core/Socket'
+
+
 
 export function install(Vue, socket) {
   if (install.installed) return
@@ -14,7 +15,7 @@ export function install(Vue, socket) {
     socket = new Socket(socket.url, socket)
   }
 
-  _Vue = Vue
+
 
   // 全局mixin
   Vue.mixin({

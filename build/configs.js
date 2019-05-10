@@ -1,9 +1,9 @@
 const path = require('path')
 const buble = require('rollup-plugin-buble')
 const flow = require('rollup-plugin-flow-no-whitespace')
+const typescript = require('rollup-plugin-typescript')
 const cjs = require('rollup-plugin-commonjs')
 const node = require('rollup-plugin-node-resolve')
-
 const babel = require('rollup-plugin-babel')
 const replace = require('rollup-plugin-replace')
 const version = process.env.VERSION || require('../package.json').version
@@ -43,6 +43,7 @@ function genConfig (opts) {
     input: {
       input: resolve('src/index.js'),
       plugins: [
+        typescript({lib: ["es5", "es6", "dom"], target: "es5"}),
         flow(),
         node(),
         babel({

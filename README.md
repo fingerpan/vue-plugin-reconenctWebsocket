@@ -1,34 +1,18 @@
-# vue-sockets
-websocket plugin for Vue2.JS
+# reconent-websocket
 
-## writing...
 
-## Installation
-``` bash
-# npm install vue-socket --save
-```
+## Features
 
-### Development Setup
 
-``` bash
-# install deps
-npm install
+# Browser Support
 
-# build dist files
-npm run build
 
-# serve examples at localhost:8080
-npm run dev
+# Installing
 
-```
 
-## start
-``` javascript
- import Socket from 'vue-socket'
- import Vue from 'vue'
- // new
- let socket = new Socket(url)
- // 使用插件
- Vue.use(Socket, socket)
+## Example
 
-```
+
+## Typescript
+
+## License
