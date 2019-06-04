@@ -9,7 +9,7 @@ const replace = require('rollup-plugin-replace')
 const version = process.env.VERSION || require('../package.json').version
 const banner =
 `/**
-  * vue-socket v${version}
+  * vue-plugin-reconentWebsockt v${version}
   * @author youngpan
   * (c) ${new Date().getFullYear()}
   */`
@@ -19,21 +19,21 @@ const resolve = _path => path.resolve(__dirname, '../', _path)
 module.exports = [
   // browser dev
   {
-    file: resolve('dist/vue-socket.js'),
+    file: resolve('dist/vue-plugin-reconentWebsockt.js'),
     format: 'umd',
     env: 'development'
   },
   {
-    file: resolve('dist/vue-socket.min.js'),
+    file: resolve('dist/vue-plugin-reconentWebsockt.min.js'),
     format: 'umd',
     env: 'production'
   },
   {
-    file: resolve('dist/vue-socket.common.js'),
+    file: resolve('dist/vue-plugin-reconentWebsockt.common.js'),
     format: 'cjs'
   },
   {
-    file: resolve('dist/vue-socket.esm.js'),
+    file: resolve('dist/vue-plugin-reconentWebsockt.esm.js'),
     format: 'es'
   }
 ].map(genConfig)
