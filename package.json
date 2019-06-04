@@ -1,8 +1,8 @@
 {
-  "name": "vue-sockets",
+  "name": "vue-plugin-reconnectWebsockets",
   "version": "1.0.0",
-  "description": "websocket plugin for Vue2.js",
-  "main": "dist/vue-socket.js",
+  "description": "auto reconenct websocket plugin for Vue2.js",
+  "main": "dist/vue-plugin-reconenctWebscokets.js",
   "types": "./types/main.d.ts",
   "scripts": {
     "dev": "node example/server.js",
@@ -12,7 +12,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/fingerpan/vue-sockets.git"
+    "url": "git+https://github.com/fingerpan/vue-plugin-reconnectWebsockets.git"
   },
   "keywords": [
     "vue2",
@@ -21,13 +21,13 @@
   "author": "youngpan",
   "license": "ISC",
   "bugs": {
-    "url": "https://github.com/fingerpan/vue-sockets/issues"
+    "url": "https://github.com/fingerpan/vue-plugin-reconnectWebsockets/issues"
   },
   "engines": {
     "node": ">= 4.0.0",
     "npm": ">= 3.0.0"
   },
-  "homepage": "https://github.com/fingerpan/vue-sockets#readme",
+  "homepage": "https://github.com/fingerpan/vue-plugin-reconnectWebsockets#readme",
   "devDependencies": {
     "axios": "^0.17.1",
     "babel": "^6.23.0",

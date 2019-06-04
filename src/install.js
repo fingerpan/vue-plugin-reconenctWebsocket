@@ -3,7 +3,7 @@
  * 注册install
  */
 import { isPlainObject, isEmptyObject } from './util.ts'
-import Socket from './core/Socket'
+import Socket from 'reconenct-websockets'
 
 
 

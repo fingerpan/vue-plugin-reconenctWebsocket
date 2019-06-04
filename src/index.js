@@ -2,7 +2,7 @@
  * @author youngpan
  * 注册install
  */
-import Socket from './core/Socket.ts'
+import Socket from 'reconenct-websockets'
 import { install } from './install'
 
 // 
@@ -12,7 +12,6 @@ Socket.install = install
 if (window !== undefined && window.Vue) {
    window.Vue.use(Socket)
 }
-
 
 
 export default Socket
